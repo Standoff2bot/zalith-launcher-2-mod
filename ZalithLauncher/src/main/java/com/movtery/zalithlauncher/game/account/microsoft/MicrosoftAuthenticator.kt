@@ -382,7 +382,7 @@ private suspend fun authenticateMinecraft(
     }
 }
 
-private suspend fun verifyGameOwnership(accessToken: String, update: (AsyncStatus) -> Unit) {
+// private suspend fun verifyGameOwnership(accessToken: String, update: (AsyncStatus) -> Unit) {
     update(AsyncStatus.VERIFY_GAME_OWNERSHIP)
     withRetry {
         val response = GLOBAL_CLIENT.get("$MINECRAFT_SERVICES_URL/entitlements/mcstore") {

@@ -157,7 +157,7 @@ fun microsoftLogin(
             }
             when (th) {
                 is HttpRequestTimeoutException -> androidText(R.string.account_logging_time_out)
-                is NotPurchasedMinecraftException -> toLocal()
+//                 is NotPurchasedMinecraftException -> toLocal()
                 is MinecraftProfileException -> th.toLocal()
                 is XboxLoginException -> th.toLocal()
                 is UnknownHostException, is UnresolvedAddressException -> androidText(R.string.error_network_unreachable)
@@ -212,7 +212,7 @@ private suspend fun microsoftAuth(
                 updateProgress(0.7f)
                 updateMessage(androidText(R.string.account_microsoft_authenticate_minecraft))
             }
-            AsyncStatus.VERIFY_GAME_OWNERSHIP -> {
+//             AsyncStatus.VERIFY_GAME_OWNERSHIP -> {
                 updateProgress(0.85f)
                 updateMessage(androidText(R.string.account_microsoft_verify_game_ownership))
             }
