@@ -85,7 +85,7 @@ fun Account.isSkinChangeAllowed(): Boolean {
 
 fun Account.accountTypePriority(): Int {
     return when (this.accountType) {
-        AccountType.MICROSOFT.tag -> 0 //微软账号优先
+        AccountType.MICROSOFT.tag -> 0
         null -> Int.MAX_VALUE
         else -> 1
     }
@@ -93,9 +93,6 @@ fun Account.accountTypePriority(): Int {
 
 private const val MICROSOFT_LOGGING_TASK = "microsoft_logging_task"
 
-/**
- * 检查当前微软账号登陆是否正在进行中
- */
 fun isMicrosoftLogging() = TaskSystem.containsTask(MICROSOFT_LOGGING_TASK)
 
 fun microsoftLogin(
@@ -127,8 +124,6 @@ fun microsoftLogin(
             val tokenResponse = getTokenResponse(deviceCode, coroutineContext) { time ->
                 (!checkIfInWebScreen()).also { exit ->
                     if (exit && time > 0) {
-                        //如果已退出网页，则视为用户想要退出登录
-                        //弹出提示
                         Logger.debug(TAG, "User left the web page during device code polling")
                         showToast(
                             androidText(R.string.account_microsoft_exit_by_user),
@@ -162,7 +157,7 @@ fun microsoftLogin(
                 is UnknownHostException, is UnresolvedAddressException -> androidText(R.string.error_network_unreachable)
                 is ConnectException -> androidText(R.string.error_connection_failed)
                 is ResponseException -> th.toLocal()
-                is CancellationException -> { null }
+                is CancellationException -> null
                 else -> {
                     androidText(
                         th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: "Unknown error"
@@ -194,29 +189,11 @@ private suspend fun microsoftAuth(
     updateMessage: (AndroidStringText?) -> Unit,
 ): Account {
     return microsoftAuthAsync(authType, refreshToken, accessToken, coroutineContext) { asyncStatus ->
-when (asyncStatus) {
-    AsyncStatus.GETTING_ACCESS_TOKEN -> {
-        updateProgress(0.25f)
-        updateMessage(androidText(R.string.account_microsoft_getting_access_token))
-    }
-    AsyncStatus.GETTING_XBL_TOKEN -> {
-        updateProgress(0.4f)
-        updateMessage(androidText(R.string.account_microsoft_getting_xbl_token))
-    }
-    AsyncStatus.GETTING_XSTS_TOKEN -> {
-        updateProgress(0.55f)
-        updateMessage(androidText(R.string.account_microsoft_getting_xsts_token))
-    }
-    AsyncStatus.AUTHENTICATE_MINECRAFT -> {
-        updateProgress(0.7f)
-        updateMessage(androidText(R.string.account_microsoft_authenticate_minecraft))
-    }
-    AsyncStatus.GETTING_PLAYER_PROFILE -> {
-        updateProgress(1f)
-        updateMessage(androidText(R.string.account_microsoft_getting_player_profile))
-    }
-    else -> {}
-}
+        when (asyncStatus) {
+            AsyncStatus.GETTING_ACCESS_TOKEN -> {
+                updateProgress(0.25f)
+                updateMessage(androidText(R.string.account_microsoft_getting_access_token))
+            }
             AsyncStatus.GETTING_XBL_TOKEN -> {
                 updateProgress(0.4f)
                 updateMessage(androidText(R.string.account_microsoft_getting_xbl_token))
@@ -229,13 +206,11 @@ when (asyncStatus) {
                 updateProgress(0.7f)
                 updateMessage(androidText(R.string.account_microsoft_authenticate_minecraft))
             }
-            AsyncStatus.VERIFY_GAME_OWNERSHIP -> {
-                // пропускаем проверку владения
-            }
             AsyncStatus.GETTING_PLAYER_PROFILE -> {
                 updateProgress(1f)
                 updateMessage(androidText(R.string.account_microsoft_getting_player_profile))
             }
+            else -> {} // игнорируем остальные статусы
         }
     }
 }
@@ -305,9 +280,6 @@ fun otherLogin(
     ).justLogin(context, account)
 }
 
-/**
- * 离线账号登陆
- */
 fun localLogin(userName: String, userUUID: String?) {
     val account = if (userUUID != null) {
         Account(
@@ -316,7 +288,6 @@ fun localLogin(userName: String, userUUID: String?) {
             accountType = AccountType.LOCAL.tag
         )
     } else {
-        //如果不填，则使用默认生成的 uuid
         Account(
             username = userName,
             accountType = AccountType.LOCAL.tag
@@ -325,14 +296,8 @@ fun localLogin(userName: String, userUUID: String?) {
     AccountsManager.saveAccount(account)
 }
 
-/**
- * [From HMCL](https://github.com/HMCL-dev/HMCL/blob/5c2bb1cc251901dd471a8aa8048d90c22bb56916/HMCLCore/src/main/java/org/jackhuang/hmcl/util/gson/UUIDTypeAdapter.java#L55)
- */
 private val regex = Regex("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})")
 
-/**
- * [From HMCL](https://github.com/HMCL-dev/HMCL/blob/5c2bb1cc251901dd471a8aa8048d90c22bb56916/HMCLCore/src/main/java/org/jackhuang/hmcl/util/gson/UUIDTypeAdapter.java#L57-L59)
- */
 fun accountUUID(input: String): UUID {
     val formatted = regex.replace(input, "$1-$2-$3-$4-$5")
     return UUID.fromString(formatted)
@@ -342,9 +307,6 @@ fun accountUUID(input: UUID): String {
     return input.toString().replace("-", "")
 }
 
-/**
- * [From HMCL](https://github.com/HMCL-dev/HMCL/blob/5c2bb1cc251901dd471a8aa8048d90c22bb56916/HMCLCore/src/main/java/org/jackhuang/hmcl/auth/offline/OfflineAccountFactory.java#L79-L81)
- */
 fun getUUIDFromUserName(username: String): UUID {
     return UUID.nameUUIDFromBytes(("OfflinePlayer:$username").toByteArray(Charsets.UTF_8))
 }
@@ -359,7 +321,6 @@ fun addOtherServer(
             task.updateMessage(androidText(R.string.account_other_login_getting_full_url))
             val isNide8 = isValidPassportId(serverUrl)
             val fullServerUrl = if (isNide8) {
-                //可能是一个统一通行证服务器ID
                 "https://auth.mc-user.com:233/$serverUrl"
             } else {
                 tryGetFullServerUrl(serverUrl)
@@ -375,7 +336,6 @@ fun addOtherServer(
             }.getOrNull()?.let { data ->
                 JSONObject(data).optJSONObject("meta")?.let { meta ->
                     if (AccountsManager.isAuthServerExists(fullServerUrl)) {
-                        //确保服务器不重复
                         return@runTask
                     }
                     val server = AuthServer(
@@ -402,9 +362,6 @@ fun addOtherServer(
     TaskSystem.submitTask(task)
 }
 
-/**
- * 获取账号类型名称
- */
 @Composable
 fun getAccountTypeName(account: Account): String {
     return if (account.isMicrosoftAccount()) {
@@ -416,10 +373,6 @@ fun getAccountTypeName(account: Account): String {
     }
 }
 
-/**
- * 修改自源代码：[HMCL Core: AuthlibInjectorServer.java](https://github.com/HMCL-dev/HMCL/blob/b38076f/HMCLCore/src/main/java/org/jackhuang/hmcl/auth/authlibinjector/AuthlibInjectorServer.java#L53-L85)
- * <br>原项目版权归原作者所有，遵循GPL v3协议
- */
 fun tryGetFullServerUrl(baseUrl: String): String {
     fun String.addSlashIfMissing(): String {
         if (!endsWith("/")) return "$this/"
@@ -458,20 +411,12 @@ fun tryGetFullServerUrl(baseUrl: String): String {
     }
 }
 
-/**
- * 修改自源代码：[HMCL Core: AuthlibInjectorServer.java](https://github.com/HMCL-dev/HMCL/blob/main/HMCLCore/src/main/java/org/jackhuang/hmcl/auth/authlibinjector/AuthlibInjectorServer.java#L90-#L96)
- * <br>原项目版权归原作者所有，遵循GPL v3协议
- */
 private fun addHttpsIfMissing(baseUrl: String): String {
     return if (!baseUrl.startsWith("http://", true) && !baseUrl.startsWith("https://")) {
         "https://$baseUrl".lowercase(Locale.ROOT)
     } else baseUrl.lowercase(Locale.ROOT)
 }
 
-/**
- * 检查是否为32位16进制字符串，这可能是一个
- * 统一通行证的服务器ID
- */
 private fun isValidPassportId(id: String): Boolean {
     val pattern = Regex("^[0-9a-f]{32}$", RegexOption.IGNORE_CASE)
     return pattern.matches(id)
