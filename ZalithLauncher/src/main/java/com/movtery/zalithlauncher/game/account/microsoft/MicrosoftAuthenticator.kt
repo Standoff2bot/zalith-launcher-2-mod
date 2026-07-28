@@ -159,7 +159,7 @@ suspend fun getTokenResponse(
         } catch (e: ClientRequestException) {
             when (val error = e.errorCode()) {
                 // 服务器正常响应，说明网络可用
-                "authorization_pending" -> consecutiveFailures = 0 // 正常情况，继续轮询
+                "authorization_pending" -> consecutiveFailures = 0 // 正常 情况，继续轮询
                 "slow_down" -> {
                     consecutiveFailures = 0
                     pollingInterval += 1000L
@@ -195,6 +195,7 @@ suspend fun getTokenResponse(
             context.ensureActive()
         }
     }
+
     Logger.warning(TAG, "Device code expired before the user completed authorization")
     throw HttpRequestTimeoutException("Authentication timed out!", expireTime)
 }
@@ -234,6 +235,7 @@ suspend fun microsoftAuthAsync(
     val xblToken = authenticateXBL(finalAccessToken, statusUpdate)
     Logger.debug(TAG, "Authenticating with Xbox Secure Token Service (XSTS)")
     val xstsToken = authenticateXSTS(xblToken.first, xblToken.second, statusUpdate, context)
+
     Logger.debug(TAG, "Authenticating with Minecraft services")
     val authResponse = authenticateMinecraft(xstsToken, statusUpdate, context)
 
@@ -333,7 +335,7 @@ private suspend fun authenticateXSTS(
             XSTSAuthResult(token = response["Token"].text(), uhs = uhs)
         } catch (e: ClientRequestException) {
             // XSTS 对账号类问题统一返回 4xx 及 XErr 错误码，expectSuccess 会提前抛出异常
-            // 因此必须从异常响应体中解析 XErr，才能向用户展示真实的失败原因
+            // 因此必须从异常响应体中解析 XErr，才能向用户展示真实的失败原 因
             val errorBody = runCatching { e.response.safeBodyAsJson<JsonObject>() }.getOrNull()
             when (val xErr = errorBody?.get("XErr").text()) {
                 //Reference : https://github.com/PrismarineJS/prismarine-auth/blob/1aef6e1/src/common/Constants.js#L50-L59
@@ -379,18 +381,6 @@ private suspend fun authenticateMinecraft(
                 }
             }
         }.getOrThrow()
-    }
-}
-
-// private suspend fun verifyGameOwnership(accessToken: String, update: (AsyncStatus) -> Unit) {
-    update(AsyncStatus.VERIFY_GAME_OWNERSHIP)
-    withRetry {
-        val response = GLOBAL_CLIENT.get("$MINECRAFT_SERVICES_URL/entitlements/mcstore") {
-            header(HttpHeaders.Authorization, "Bearer $accessToken")
-        }
-        if (response.safeBodyAsJson<JsonObject>()["items"]?.jsonArray?.isEmpty() != false) {
-            throw NotPurchasedMinecraftException()
-        }
     }
 }
 
