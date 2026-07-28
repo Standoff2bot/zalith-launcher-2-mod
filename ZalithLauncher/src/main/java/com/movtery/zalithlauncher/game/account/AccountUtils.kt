@@ -194,11 +194,29 @@ private suspend fun microsoftAuth(
     updateMessage: (AndroidStringText?) -> Unit,
 ): Account {
     return microsoftAuthAsync(authType, refreshToken, accessToken, coroutineContext) { asyncStatus ->
-        when (asyncStatus) {
-            AsyncStatus.GETTING_ACCESS_TOKEN -> {
-                updateProgress(0.25f)
-                updateMessage(androidText(R.string.account_microsoft_getting_access_token))
-            }
+when (asyncStatus) {
+    AsyncStatus.GETTING_ACCESS_TOKEN -> {
+        updateProgress(0.25f)
+        updateMessage(androidText(R.string.account_microsoft_getting_access_token))
+    }
+    AsyncStatus.GETTING_XBL_TOKEN -> {
+        updateProgress(0.4f)
+        updateMessage(androidText(R.string.account_microsoft_getting_xbl_token))
+    }
+    AsyncStatus.GETTING_XSTS_TOKEN -> {
+        updateProgress(0.55f)
+        updateMessage(androidText(R.string.account_microsoft_getting_xsts_token))
+    }
+    AsyncStatus.AUTHENTICATE_MINECRAFT -> {
+        updateProgress(0.7f)
+        updateMessage(androidText(R.string.account_microsoft_authenticate_minecraft))
+    }
+    AsyncStatus.GETTING_PLAYER_PROFILE -> {
+        updateProgress(1f)
+        updateMessage(androidText(R.string.account_microsoft_getting_player_profile))
+    }
+    else -> {}
+}
             AsyncStatus.GETTING_XBL_TOKEN -> {
                 updateProgress(0.4f)
                 updateMessage(androidText(R.string.account_microsoft_getting_xbl_token))
