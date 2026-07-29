@@ -63,6 +63,8 @@ fun findBestRAMAllocation(context: Context): Int {
         deviceRam < 3064 -> 936
         deviceRam < 4096 -> 1144
         deviceRam < 6144 -> 1536
-        else -> 2048 //Default RAM allocation for 64 bits
+        deviceRam < 8192 -> 2048
+        deviceRam < 12288 -> 3072
+        else -> 4096 // Default RAM allocation for devices with 12GB+ RAM
     }
 }

@@ -38,7 +38,6 @@ import com.movtery.zalithlauncher.game.account.isMicrosoftAccount
 import com.movtery.zalithlauncher.game.account.localLogin
 import com.movtery.zalithlauncher.game.account.microsoft.MINECRAFT_SERVICES_URL
 import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileException
-import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftException
 import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException
 import com.movtery.zalithlauncher.game.account.microsoft.toLocal
 import com.movtery.zalithlauncher.game.account.microsoftLogin
@@ -780,7 +779,6 @@ class AccountManageViewModel @Inject constructor(
      * @return 格式化后的错误提示
      */
     fun formatAccountError(th: Throwable): AndroidStringText = when (th) {
-        is NotPurchasedMinecraftException -> toLocal()
         is MinecraftProfileException -> th.toLocal()
         is XboxLoginException -> th.toLocal()
         is HttpRequestTimeoutException -> androidText(R.string.error_timeout)

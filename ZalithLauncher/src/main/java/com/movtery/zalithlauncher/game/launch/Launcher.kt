@@ -266,8 +266,20 @@ abstract class Launcher(
 
         //Add automatically generated args
         val ramAllocationString = ramAllocation.toString()
-        args.add("-Xms${ramAllocationString}M")
+        // Use a smaller initial heap to reduce GC pause times and avoid immediate full-heap allocation.
+        // -Xms is set to half of -Xmx so the JVM can grow the heap gradually,
+        // resulting in shorter young-generation GC pauses on memory-constrained Android devices.
+        val initialHeap = (ramAllocation / 2).coerceAtLeast(256)
+        args.add("-Xms${initialHeap}M")
         args.add("-Xmx${ramAllocationString}M")
+
+        // Apply G1GC performance flags by default to reduce stutter in Minecraft.
+        // Minecraft is latency-sensitive; the default Parallel GC (on JDK 8) causes long Full GC pauses.
+        // Only applied if the user hasn't manually specified a different GC.
+        val userArgsString = args.joinToString(" ")
+        if (JvmPerformanceFlags.canApply(userArgsString)) {
+            args.addAll(JvmPerformanceFlags.RECOMMENDED_FLAGS.filter { it !in args })
+        }
 
         args.add("-Dorg.lwjgl.openal.libname=${PathManager.DIR_NATIVE_LIB}/libopenal.so")
 
@@ -363,17 +375,6 @@ abstract class Launcher(
         } ?: libName
     }
 
-    private fun locateLibs(path: File): List<File> {
-        val children = path.listFiles() ?: return emptyList()
-        return children.flatMap { file ->
-            when {
-                file.isFile && file.name.endsWith(".so") -> listOf(file)
-                file.isDirectory -> locateLibs(file)
-                else -> emptyList()
-            }
-        }
-    }
-
     private fun setEnv(screenSize: IntSize) {
         val envMap = initEnv(screenSize)
         envMap.forEach { (key, value) ->
@@ -440,9 +441,6 @@ abstract class Launcher(
         ZLBridge.dlopen("$javaLibDir/libawt.so")
         ZLBridge.dlopen("$javaLibDir/libawt_headless.so")
         ZLBridge.dlopen("$javaLibDir/libfontmanager.so")
-        locateLibs(File(runtimeHome)).forEach { file ->
-            ZLBridge.dlopen(file.absolutePath)
-        }
     }
 
     @CallSuper

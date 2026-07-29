@@ -27,7 +27,6 @@ import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.account.auth_server.ResponseException
 import com.movtery.zalithlauncher.game.account.isLocalAccount
 import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileException
-import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftException
 import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException
 import com.movtery.zalithlauncher.game.account.microsoft.toLocal
 import com.movtery.zalithlauncher.game.version.download.DownloadMode
@@ -187,7 +186,6 @@ object LaunchGame {
                 },
                 onFailed = { error ->
                     val message: AndroidStringText = when (error) {
-                        is NotPurchasedMinecraftException -> toLocal()
                         is MinecraftProfileException -> error.toLocal()
                         is XboxLoginException -> error.toLocal()
                         is ResponseException -> androidText(error.responseMessage)

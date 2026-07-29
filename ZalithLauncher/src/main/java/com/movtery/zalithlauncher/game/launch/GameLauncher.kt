@@ -359,10 +359,15 @@ class GameLauncher(
 private fun checkAndUsedJSPH(envMap: MutableMap<String, String>, runtime: Runtime) {
     if (runtime.javaVersion < 11) return //onUseJSPH
     val dir = File(PathManager.DIR_NATIVE_LIB).takeIf { it.isDirectory } ?: return
-    val jsphHome = if (runtime.javaVersion == 17) "libjsph17" else "libjsph21"
-    dir.listFiles { _, name -> name.startsWith(jsphHome) }?.takeIf { it.isNotEmpty() }?.let {
+    // Try multiple JSPH library versions in order of preference,
+    // so that Java 11/15/17/21/25+ can all benefit from JSPH optimization.
+    val jsphCandidates = listOf("libjsph21", "libjsph17")
+    for (jsphHome in jsphCandidates) {
         val libName = "${PathManager.DIR_NATIVE_LIB}/$jsphHome.so"
-        envMap["JSP"] = libName
+        if (File(libName).exists()) {
+            envMap["JSP"] = libName
+            return
+        }
     }
 }
 
@@ -391,6 +396,7 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
     if (renderer != GL4ESRenderer && renderer != NGGL4ESRenderer) {
         envMap["MESA_LOADER_DRIVER_OVERRIDE"] = "zink"
         envMap["MESA_GLSL_CACHE_DIR"] = PathManager.DIR_CACHE.absolutePath
+        envMap["MESA_SHADER_CACHE_DIR"] = PathManager.DIR_CACHE.absolutePath
         envMap["MESA_GL_VERSION_OVERRIDE"] = "4.6"
         envMap["MESA_GLSL_VERSION_OVERRIDE"] = "460"
         envMap["force_glsl_extensions_warn"] = "true"
