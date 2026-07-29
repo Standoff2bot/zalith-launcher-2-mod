@@ -48,6 +48,7 @@ import io.ktor.client.plugins.HttpRequestTimeoutException
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
+import com.movtery.zalithlauncher.utils.logging.Logger
 
 private const val TAG = "LaunchGame"
 
