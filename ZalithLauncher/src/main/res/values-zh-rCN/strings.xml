@@ -2,6 +2,7 @@
 <resources>
     <string name="generic_cancel">取消</string>
     <string name="generic_confirm">确认</string>
+    <string name="generic_apply">应用</string>
     <string name="generic_error">错误</string>
     <string name="generic_tip">提示</string>
     <string name="generic_warning">警告</string>
@@ -914,8 +915,11 @@
     <string name="settings_game_graphics_api_summary">设置 Minecraft 26.2+ 将使用的图形 API</string>
     <string name="settings_game_graphics_api_default">跟随游戏设置</string>
     <string name="settings_game_graphics_api_default_opengl">仅首次启动时设置为 OpenGL</string>
+    <string name="versions_config_graphics_api_vulkan_unsupported">该 Minecraft 版本不包含 Mojang 官方原生 Vulkan 渲染器（26.2 版本才加入），此设置将被游戏忽略。</string>
     <string name="settings_game_jvm_args_title">JVM 启动参数</string>
     <string name="settings_game_jvm_args_summary">启动 JVM 时，额外添加的 JVM 参数，不建议在没有把握的情况下进行修改，因为这很有可能导致崩溃</string>
+    <string name="settings_game_jvm_performance_flags_title">性能调优 GC 参数</string>
+    <string name="settings_game_jvm_performance_flags_summary">在上方 JVM 参数中追加一组 G1GC 暂停时间调优参数，用于减少卡顿。如果你已手动指定了垃圾回收器，此按钮不会生效。</string>
     <string name="settings_game_show_log_automatic_title">自动显示日志</string>
     <string name="settings_game_show_log_automatic_summary">在游戏还未正式渲染画面前，自动显示日志</string>
     <string name="settings_game_log_text_size_title">日志字体大小</string>

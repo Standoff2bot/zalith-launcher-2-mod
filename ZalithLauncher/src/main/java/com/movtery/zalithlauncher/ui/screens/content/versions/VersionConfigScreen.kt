@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -49,6 +50,7 @@ import com.movtery.zalithlauncher.game.support.touch_controller.VibrationHandler
 import com.movtery.zalithlauncher.game.version.installed.GraphicsApi
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionConfig
+import com.movtery.zalithlauncher.game.version.installed.utils.MinecraftVulkanSupport
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.unit.floatRange
 import com.movtery.zalithlauncher.setting.unit.getOrMin
@@ -118,6 +120,7 @@ fun VersionConfigScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
+                    version = version,
                     config = config,
                     submitError = submitError
                 )
@@ -150,6 +153,7 @@ fun VersionConfigScreen(
 
 @Composable
 private fun VersionConfigs(
+    version: Version,
     config: VersionConfig,
     submitError: (ErrorViewModel.ThrowableMessage) -> Unit,
     modifier: Modifier = Modifier
@@ -268,6 +272,26 @@ private fun VersionConfigs(
                 }
             }
         )
+
+        if (config.graphicsApi == GraphicsApi.VULKAN) {
+            //原生 Vulkan 渲染后端是 Minecraft 26.2 (Chaos Cubed) 才加入的实验性功能，
+            //26.1 及更早版本没有这个选项，写入 preferredGraphicsBackend 也会被游戏忽略。
+            //这里读取客户端 Jar 内的 world_version 做实际判断，而不是猜测版本号字符串。
+            val clientJar = remember(version) { version.getClientJar() }
+            val supportsVulkan by produceState(initialValue = true, clientJar) {
+                value = MinecraftVulkanSupport.supportsNativeVulkan(clientJar)
+            }
+            if (!supportsVulkan) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    text = stringResource(R.string.versions_config_graphics_api_vulkan_unsupported),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
 
         val controls by ControlManager.dataList.collectAsStateWithLifecycle()
         val controlsIdList = getIDList(controls.filter { it.isSupport }) {

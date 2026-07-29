@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.game.launch.JvmPerformanceFlags
 import com.movtery.zalithlauncher.game.multirt.RuntimesManager
 import com.movtery.zalithlauncher.game.plugin.natives.NativePlugin
 import com.movtery.zalithlauncher.game.plugin.natives.NativePluginManager
@@ -236,10 +238,34 @@ fun GameSettingsScreen(
 
                     TextInputSettingsCard(
                         modifier = Modifier.fillMaxWidth(),
-                        position = CardPosition.Bottom,
+                        position = CardPosition.Middle,
                         unit = AllSettings.jvmArgs,
                         title = stringResource(R.string.settings_game_jvm_args_title),
                         summary = stringResource(R.string.settings_game_jvm_args_summary)
+                    )
+
+                    //可选的性能调优参数：仅在用户主动点击时追加，不会自动强加给所有玩家；
+                    //如果用户已经手动指定了别的GC，则不会做任何改动（见 JvmPerformanceFlags）
+                    val currentJvmArgs = AllSettings.jvmArgs.state
+                    val canApplyPerfFlags = remember(currentJvmArgs) {
+                        JvmPerformanceFlags.canApply(currentJvmArgs)
+                    }
+                    SettingsCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        position = CardPosition.Bottom,
+                        title = stringResource(R.string.settings_game_jvm_performance_flags_title),
+                        summary = stringResource(R.string.settings_game_jvm_performance_flags_summary),
+                        onClick = {},
+                        trailingIcon = {
+                            Button(
+                                enabled = canApplyPerfFlags,
+                                onClick = {
+                                    AllSettings.jvmArgs.save(JvmPerformanceFlags.appendTo(currentJvmArgs))
+                                }
+                            ) {
+                                Text(text = stringResource(R.string.generic_apply))
+                            }
+                        }
                     )
                 }
             }

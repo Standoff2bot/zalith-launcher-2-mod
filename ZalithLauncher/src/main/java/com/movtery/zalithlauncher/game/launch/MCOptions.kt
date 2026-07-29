@@ -137,7 +137,14 @@ object MCOptions {
             tempFile.writeText(
                 parameterMap.entries.joinToString("\n") { "${it.key}:${it.value}" }
             )
-            tempFile.renameTo(targetFile)
+            //注意：File.renameTo() 在部分厂商存储实现/跨文件系统场景下可能返回 false 而不抛出异常，
+            //此前的代码没有检查返回值，这会导致例如 preferredGraphicsBackend（Vulkan/OpenGL 切换）等
+            //设置在写入失败时"看起来成功"，实际上 options.txt 完全没有被更新，且不会有任何报错。
+            if (!tempFile.renameTo(targetFile)) {
+                Logger.warning(TAG, "Direct rename failed, falling back to copy for options.txt")
+                tempFile.copyTo(targetFile, overwrite = true)
+                tempFile.delete()
+            }
         }.onFailure {
             Logger.error(TAG, "Failed to save options.txt!", it)
             tempFile.delete()
