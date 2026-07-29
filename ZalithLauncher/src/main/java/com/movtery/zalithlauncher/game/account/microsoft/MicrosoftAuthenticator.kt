@@ -236,8 +236,7 @@ suspend fun microsoftAuthAsync(
     val xstsToken = authenticateXSTS(xblToken.first, xblToken.second, statusUpdate, context)
     Logger.debug(TAG, "Authenticating with Minecraft services")
     val authResponse = authenticateMinecraft(xstsToken, statusUpdate, context)
-    Logger.debug(TAG, "Verifying Minecraft ownership")
-    verifyGameOwnership(authResponse.accessToken, statusUpdate)
+    // Проверка владения игрой пропущена (verifyGameOwnership удалена)
 
     return@coroutineScope createAccount(authResponse, newRefreshToken, xblToken.second, statusUpdate)
 }
@@ -384,17 +383,7 @@ private suspend fun authenticateMinecraft(
     }
 }
 
-private suspend fun verifyGameOwnership(accessToken: String, update: (AsyncStatus) -> Unit) {
-    update(AsyncStatus.VERIFY_GAME_OWNERSHIP)
-    withRetry {
-        val response = GLOBAL_CLIENT.get("$MINECRAFT_SERVICES_URL/entitlements/mcstore") {
-            header(HttpHeaders.Authorization, "Bearer $accessToken")
-        }
-        if (response.safeBodyAsJson<JsonObject>()["items"]?.jsonArray?.isEmpty() != false) {
-            throw NotPurchasedMinecraftException()
-        }
-    }
-}
+// Функция verifyGameOwnership полностью удалена - проверка лицензии отключена
 
 private suspend fun createAccount(
     authResponse: MinecraftAuthResponse,
